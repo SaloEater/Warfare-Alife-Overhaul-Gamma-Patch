@@ -75,11 +75,13 @@ end
 ]]
 
 function update()
+    printf("Updating factions...")
     for i,faction in pairs(factions) do
         if faction ~= "monster" then
             update_faction(faction)
         end
     end
+    printf("Factions updated.")
 end
 
 function update_faction(faction)
@@ -87,256 +89,477 @@ function update_faction(faction)
         return
     end
 
+    printf("Updating faction %s", faction)
+
     if not (faction_information[faction]) then
+        printf("Line 1: faction_information[%s] not found, initializing", faction)
         local min_resurgence_wait_time = warfare_options.options.factions[faction].min_resurgence_wait_time
+        printf("Line 2: min_resurgence_wait_time = %s", min_resurgence_wait_time)
         local max_resurgence_wait_time = warfare_options.options.factions[faction].max_resurgence_wait_time
+        printf("Line 3: max_resurgence_wait_time = %s", max_resurgence_wait_time)
         local faction_resurgence_chance = warfare_options.options.factions[faction].resurgence_chance
+        printf("Line 4: faction_resurgence_chance = %s", faction_resurgence_chance)
 
         local max_random_patrols = warfare_options.options.factions[faction].max_random_patrols
+        printf("Line 5: max_random_patrols = %s", max_random_patrols)
         local min_random_patrol_time = warfare_options.options.factions[faction].min_random_patrol_time
+        printf("Line 6: min_random_patrol_time = %s", min_random_patrol_time)
         local max_random_patrol_time = warfare_options.options.factions[faction].max_random_patrol_time
+        printf("Line 7: max_random_patrol_time = %s", max_random_patrol_time)
 
         local next_resurgence_attempt = math.random(min_resurgence_wait_time, max_resurgence_wait_time)
+        printf("Line 8: next_resurgence_attempt = %s", next_resurgence_attempt)
         local next_random_patrol = math.random(min_random_patrol_time, max_random_patrol_time)
+        printf("Line 9: next_random_patrol = %s", next_random_patrol)
 
         faction_information[faction] = {}
+        printf("Line 10: Created empty faction_information table")
         faction_information[faction].base_count = 0
+        printf("Line 11: Set base_count = 0")
         faction_information[faction].resource_count = 0
+        printf("Line 12: Set resource_count = 0")
         faction_information[faction].total_power = 0
+        printf("Line 13: Set total_power = 0")
         faction_information[faction].inactive_squads = 0
+        printf("Line 14: Set inactive_squads = 0")
         faction_information[faction].active_squads = 0
+        printf("Line 15: Set active_squads = 0")
         faction_information[faction].faction_respawn = 0
+        printf("Line 16: Set faction_respawn = 0")
         faction_information[faction].patrol_respawn = 0
+        printf("Line 17: Set patrol_respawn = 0")
         faction_information[faction].patrol_squads = 0
+        printf("Line 18: Set patrol_squads = 0")
         faction_information[faction].invasion_size = 0
+        printf("Line 19: Set invasion_size = 0")
         faction_information[faction].patrol_pop_factor = 0
+        printf("Line 20: Set patrol_pop_factor = 0")
         faction_information[faction].last_resurgence_attempt = game.get_game_time()
+        printf("Line 21: Set last_resurgence_attempt to current time")
         faction_information[faction].next_resurgence_attempt = next_resurgence_attempt
+        printf("Line 22: Set next_resurgence_attempt = %s", next_resurgence_attempt)
         faction_information[faction].next_random_patrol = 0
+        printf("Line 23: Set next_random_patrol = 0")
         faction_information[faction].last_random_patrol = game.get_game_time()
+        printf("Line 24: Set last_random_patrol to current time")
     end
+    printf("Line 25: Finished initial faction_information setup")
 
     if (not faction_information[faction].timer or game.get_game_time():diffSec(faction_information[faction].timer) >= (faction_information[faction].next_update*6)) then
+        printf("Line 26: Time to update faction information")
         printd(0, faction or "nil faction")
+        printf("Line 27: Called printd(0)")
 
         local min_resurgence_wait_time = warfare_options.options.factions[faction].min_resurgence_wait_time
+        printf("Line 28: min_resurgence_wait_time = %s", min_resurgence_wait_time)
         local max_resurgence_wait_time = warfare_options.options.factions[faction].max_resurgence_wait_time
+        printf("Line 29: max_resurgence_wait_time = %s", max_resurgence_wait_time)
         local faction_resurgence_chance = warfare_options.options.factions[faction].resurgence_chance
+        printf("Line 30: faction_resurgence_chance = %s", faction_resurgence_chance)
 
         local max_random_patrols = warfare_options.options.factions[faction].max_random_patrols
+        printf("Line 31: max_random_patrols = %s", max_random_patrols)
         local min_random_patrol_time = warfare_options.options.factions[faction].min_random_patrol_time
+        printf("Line 32: min_random_patrol_time = %s", min_random_patrol_time)
         local max_random_patrol_time = warfare_options.options.factions[faction].max_random_patrol_time
+        printf("Line 33: max_random_patrol_time = %s", max_random_patrol_time)
 
         local last_resurgence_attempt = faction_information[faction].last_resurgence_attempt or game.get_game_time()
+        printf("Line 34: last_resurgence_attempt = %s", last_resurgence_attempt)
         local next_resurgence_attempt = faction_information[faction].next_resurgence_attempt or math.random(min_resurgence_wait_time, max_resurgence_wait_time)
+        printf("Line 35: next_resurgence_attempt = %s", next_resurgence_attempt)
         local last_random_patrol = faction_information[faction].last_random_patrol or game.get_game_time()
+        printf("Line 36: last_random_patrol = %s", last_random_patrol)
         local next_random_patrol = faction_information[faction].next_random_patrol or math.random(min_random_patrol_time, max_random_patrol_time)
+        printf("Line 37: next_random_patrol = %s", next_random_patrol)
 
         faction_information[faction] = {}
+        printf("Line 38: Recreated empty faction_information table")
         faction_information[faction].timer = game.get_game_time()
+        printf("Line 39: Set timer to current time")
         faction_information[faction].next_update = math.random(1, 5)
+        printf("Line 40: Set next_update = %s", faction_information[faction].next_update)
         faction_information[faction].base_count = 0
+        printf("Line 41: Set base_count = 0")
         faction_information[faction].resource_count = 0
+        printf("Line 42: Set resource_count = 0")
         faction_information[faction].total_power = 0
+        printf("Line 43: Set total_power = 0")
         faction_information[faction].inactive_squads = 0
+        printf("Line 44: Set inactive_squads = 0")
         faction_information[faction].active_squads = 0
+        printf("Line 45: Set active_squads = 0")
         faction_information[faction].faction_respawn = 0
+        printf("Line 46: Set faction_respawn = 0")
         faction_information[faction].patrol_respawn = 0
+        printf("Line 47: Set patrol_respawn = 0")
         faction_information[faction].patrol_squads = 0
+        printf("Line 48: Set patrol_squads = 0")
         faction_information[faction].invasion_size = 0
+        printf("Line 49: Set invasion_size = 0")
         faction_information[faction].patrol_pop_factor = 0
+        printf("Line 50: Set patrol_pop_factor = 0")
         faction_information[faction].last_resurgence_attempt = last_resurgence_attempt
+        printf("Line 51: Set last_resurgence_attempt = %s", last_resurgence_attempt)
         faction_information[faction].next_resurgence_attempt = next_resurgence_attempt
+        printf("Line 52: Set next_resurgence_attempt = %s", next_resurgence_attempt)
         faction_information[faction].last_random_patrol = last_random_patrol
+        printf("Line 53: Set last_random_patrol = %s", last_random_patrol)
         faction_information[faction].next_random_patrol = next_random_patrol
+        printf("Line 54: Set next_random_patrol = %s", next_random_patrol)
 
         for i,lvl in pairs(level_targets.active_levels) do
+            printf("Line 55: Processing level %s", lvl)
             local info = warfare_levels.level_information[lvl]
+            printf("Line 56: Got level information")
 
             if (info.faction_stats and info.faction_stats[faction]) then
+                printf("Line 57: Level has faction stats for %s", faction)
                 local num_active = sim_offline_combat.get_num_squads_on_level(lvl, faction, true)
+                printf("Line 58: num_active = %s", num_active)
                 local num_inactive = sim_offline_combat.get_num_squads_on_level(lvl, faction, false)
+                printf("Line 59: num_inactive = %s", num_inactive)
 
                 faction_information[faction].base_count = faction_information[faction].base_count + info.faction_stats[faction].base_count
+                printf("Line 60: Added %s to base_count, now %s", info.faction_stats[faction].base_count, faction_information[faction].base_count)
                 faction_information[faction].resource_count = faction_information[faction].resource_count + info.faction_stats[faction].resource_count
+                printf("Line 61: Added %s to resource_count, now %s", info.faction_stats[faction].resource_count, faction_information[faction].resource_count)
                 faction_information[faction].total_power = faction_information[faction].total_power + info.faction_stats[faction].total_power
+                printf("Line 62: Added %s to total_power, now %s", info.faction_stats[faction].total_power, faction_information[faction].total_power)
                 faction_information[faction].active_squads = faction_information[faction].active_squads + num_active
+                printf("Line 63: Added %s to active_squads, now %s", num_active, faction_information[faction].active_squads)
                 faction_information[faction].inactive_squads = faction_information[faction].inactive_squads + num_inactive
+                printf("Line 64: Added %s to inactive_squads, now %s", num_inactive, faction_information[faction].inactive_squads)
             end
+            printf("Line 65: Finished processing level %s", lvl)
         end
+        printf("Line 66: Finished processing all levels")
 
         local ff = warfare_options.options.factions[faction]
+        printf("Line 67: Got faction options for %s", faction)
 
         if not (ff) then
+            printf("Line 68: No faction options found, returning")
             return
         end
+        printf("Line 69: Faction options found, continuing")
 
         local base_count = faction_information[faction].base_count or 0
+        printf("Line 70: base_count = %s", base_count)
         local resource_count = faction_information[faction].resource_count or 0
+        printf("Line 71: resource_count = %s", resource_count)
 
         if (game_relations.is_factions_enemies(faction, warfare.actor_faction)) then
+            printf("Line 72: Faction is enemy of player faction")
             base_count = base_count + warfare_options.options.enemy_base_boost
+            printf("Line 73: Added enemy_base_boost, base_count now %s", base_count)
             resource_count = resource_count + warfare_options.options.enemy_resource_boost
+            printf("Line 74: Added enemy_resource_boost, resource_count now %s", resource_count)
         end
+        printf("Line 75: Checked enemy status")
 
         base_count = base_count + (ff and ff.base_count_modifier or 0)
+        printf("Line 76: Added base_count_modifier, base_count now %s", base_count)
         resource_count = resource_count + (ff and ff.resource_count_modifier or 0)
+        printf("Line 77: Added resource_count_modifier, resource_count now %s", resource_count)
 
         faction_information[faction].base_count = base_count
+        printf("Line 78: Updated faction_information base_count = %s", base_count)
         faction_information[faction].resource_count = resource_count
+        printf("Line 79: Updated faction_information resource_count = %s", resource_count)
 
         local respawn = warfare.lerp(ff.max_faction_respawn, ff.min_faction_respawn, clamp(resource_count / warfare.resource_count, 0, 1))
+        printf("Line 80: respawn = %s", respawn)
         local patrol_respawn = warfare.lerp(ff.max_patrol_time, ff.min_patrol_time, clamp(resource_count / warfare.resource_count, 0, 1))
+        printf("Line 81: patrol_respawn = %s", patrol_respawn)
         local invasion_size = warfare.lerp(ff.min_invasion_size, ff.max_invasion_size, clamp(base_count / warfare.base_count, 0, 1))
+        printf("Line 82: invasion_size = %s", invasion_size)
         local patrol_pop_factor = warfare.lerp(ff.min_patrol_squads, ff.max_patrol_squads, clamp(base_count / warfare.base_count, 0, 1))
+        printf("Line 83: patrol_pop_factor = %s", patrol_pop_factor)
 
         for faction,tbl in pairs(warfare.registered_squads) do
+            printf("Line 84: Processing registered squads for faction %s", faction)
             for ID,target in pairs(tbl) do
+                printf("Line 85: Checking squad %s", ID)
                 local obj = alife_object(ID)
+                printf("Line 86: Got alife object: %s", obj and obj.id or "nil")
 
                 if (obj) then
+                    printf("Line 87: Object exists")
                     if not (obj.clsid and obj:clsid() == clsid.online_offline_group_s and obj:get_squad_community() == faction) then
+                        printf("Line 88: Object not valid squad, removing from registered_squads")
                         warfare.registered_squads[faction][ID] = nil
+                    else
+                        printf("Line 89: Object is valid squad")
                     end
                 else
+                    printf("Line 90: Object doesn't exist, removing from registered_squads")
                     warfare.registered_squads[faction][ID] = nil
                 end
+                printf("Line 91: Finished checking squad %s", ID)
             end
+            printf("Line 92: Finished processing registered squads for faction %s", faction)
         end
+        printf("Line 93: Finished cleaning registered_squads")
 
         faction_information[faction].faction_respawn = respawn
+        printf("Line 94: Set faction_respawn = %s", respawn)
         faction_information[faction].patrol_respawn = patrol_respawn
+        printf("Line 95: Set patrol_respawn = %s", patrol_respawn)
         faction_information[faction].patrol_squads = patrol_squads
+        printf("Line 96: Set patrol_squads = %s", patrol_squads or "nil")
         faction_information[faction].invasion_size = invasion_size
+        printf("Line 97: Set invasion_size = %s", invasion_size)
         faction_information[faction].patrol_pop_factor = patrol_pop_factor
+        printf("Line 98: Set patrol_pop_factor = %s", patrol_pop_factor)
 
         local mod = (ff and ff.base_count_modifier or 0)
+        printf("Line 99: mod = %s", mod)
 
         if (game_relations.is_factions_enemies(faction, warfare.actor_faction)) then
+            printf("Line 100: Faction is enemy of player, adding enemy_base_boost to mod")
             mod = mod + warfare_options.options.enemy_base_boost
+            printf("Line 101: mod now = %s", mod)
         end
+        printf("Line 102: Checked enemy status for mod")
 
         if (warfare_options.options.factions[faction].random_patrols) then
+            printf("Line 103: Faction has random_patrols enabled")
             if (game.get_game_time():diffSec(faction_information[faction].last_random_patrol) > faction_information[faction].next_random_patrol*6) then
+                printf("Line 104: Time to generate random patrol")
                 faction_information[faction].last_random_patrol = game.get_game_time()
+                printf("Line 105: Updated last_random_patrol to current time")
                 faction_information[faction].next_random_patrol = math.random(min_random_patrol_time, max_random_patrol_time)
+                printf("Line 106: Set next_random_patrol = %s", faction_information[faction].next_random_patrol)
 
                 local start_id = smart_terrain_warfare.find_random_patrol_target(nil, faction)
+                printf("Line 107: start_id = %s", start_id or "nil")
                 local start = start_id and alife_object(start_id)
+                printf("Line 108: start smart = %s", start and start.id or "nil")
                 local target_id
+                printf("Line 109: Initialized target_id as nil")
 
                 -- loners/ecolog don't get sent off randomly, they get sent according to their respective loner/ecolog process functions
                 if (faction == "stalker") or (faction == "ecolog") then
+                    printf("Line 110: Faction is stalker or ecolog, targeting same location")
                     target_id = start_id
+                    printf("Line 111: target_id = %s", target_id or "nil")
                 else
+                    printf("Line 112: Finding random patrol target")
                     target_id = smart_terrain_warfare.find_random_patrol_target(start, faction)
+                    printf("Line 113: target_id = %s", target_id or "nil")
                 end
 
                 local count = 0
+                printf("Line 114: Initialized count = 0")
                 for squad_id, squad_faction in pairs(smart_terrain_warfare.random_patrols) do
+                    printf("Line 115: Checking random patrol %s", squad_id)
                     if (squad_faction and squad_faction == faction) then
+                        printf("Line 116: Patrol belongs to this faction")
                         count = count + 1
+                        printf("Line 117: Incremented count to %s", count)
                     end
+                    printf("Line 118: Finished checking patrol %s", squad_id)
                 end
+                printf("Line 119: Current random patrol count for faction: %s", count)
 
                 if (start and target_id and (count < max_random_patrols)) then
+                    printf("Line 120: Can spawn random patrol")
                     local spawn_random_patrol = true
+                    printf("Line 121: spawn_random_patrol = true")
 
                     -- don't spawn random patrols too close to player
                     if (start.is_on_actor_level) then
+                        printf("Line 122: Start is on actor level")
                         local actor_dist = start.position:distance_to(db.actor:position())
+                        printf("Line 123: actor_dist = %s", actor_dist)
                         if (actor_dist < 50) then
+                            printf("Line 124: Too close to player, not spawning")
                             spawn_random_patrol = false
-                            faction_information[faction].next_random_patrol = math.random(30,120)		-- if random patrol fails to spawn, check back sooner to try elsewhere
+                            printf("Line 125: spawn_random_patrol = false")
+                            faction_information[faction].next_random_patrol = math.random(30,120)
+                            printf("Line 126: Set shorter next_random_patrol = %s", faction_information[faction].next_random_patrol)
+                        else
+                            printf("Line 127: Distance is acceptable")
                         end
+                    else
+                        printf("Line 128: Start is not on actor level")
                     end
 
                     if spawn_random_patrol then
+                        printf("Line 129: Spawning random patrol")
                         local current_level = start.level_id
+                        printf("Line 130: current_level = %s", current_level)
                         local section = faction_expansions.get_spawn_section(faction, faction_information[faction].resource_count, current_level)
+                        printf("Line 131: section = %s", section)
                         local squad = utils_obj.create_squad(section, start:name())
+                        printf("Line 132: Created squad %s", squad and squad.id or "nil")
                         smart_terrain_warfare.random_patrols[squad.id] = faction
+                        printf("Line 133: Added to random_patrols table")
                         sim_squad_warfare.set_target(squad, target_id)
+                        printf("Line 134: Set target to %s", target_id)
+                    else
+                        printf("Line 135: Not spawning random patrol")
                     end
+                else
+                    printf("Line 136: Cannot spawn random patrol: start=%s, target=%s, count=%s, max=%s",
+                            start and "yes" or "no", target_id and "yes" or "no", count, max_random_patrols)
                 end
+            else
+                printf("Line 137: Not time for random patrol yet")
             end
+        else
+            printf("Line 138: Faction doesn't use random patrols")
         end
 
         if (warfare_options.options.factions[faction].participate_in_warfare and (faction_information[faction].base_count + mod) < 1) then
+            printf("Line 139: Faction qualifies for resurgence (participate_in_warfare=true, base_count+mod < 1)")
             if (game.get_game_time():diffSec(faction_information[faction].last_resurgence_attempt) > faction_information[faction].next_resurgence_attempt*6) then
+                printf("Line 140: Time for resurgence attempt")
                 faction_information[faction].last_resurgence_attempt = game.get_game_time()
+                printf("Line 141: Updated last_resurgence_attempt to current time")
                 faction_information[faction].next_resurgence_attempt = math.random(min_resurgence_wait_time, max_resurgence_wait_time)
+                printf("Line 142: Set next_resurgence_attempt = %s", faction_information[faction].next_resurgence_attempt)
 
                 -- chance to skip this resurgence attempt
                 if math.random(0,99) < faction_resurgence_chance then
+                    printf("Line 143: Random check passed (%s < %s), attempting resurgence", math.random(0,99), faction_resurgence_chance)
                     local levels = warfare.hash_table_to_array(level_targets.active_levels)
+                    printf("Line 144: Got %s active levels", #levels)
                     warfare.shuffleTable(levels)
+                    printf("Line 145: Shuffled levels table")
 
                     local attempted = false
+                    printf("Line 146: attempted = false")
                     for _,v in pairs(levels) do
+                        printf("Line 147: Checking level %s", v.key)
                         local chosen = v.key
+                        printf("Line 148: chosen = %s", chosen)
                         local info = warfare_levels.level_information[chosen]
+                        printf("Line 149: Got level information")
 
                         if (info) then
+                            printf("Line 150: Level info exists")
                             local smarts = info.smarts
+                            printf("Line 151: Got %s smarts", #smarts)
                             local targets = {}
+                            printf("Line 152: Created empty targets table")
                             local spawns = {}
+                            printf("Line 153: Created empty spawns table")
 
                             for v,smart_id in pairs(smarts) do
+                                printf("Line 154: Checking smart %s", smart_id)
                                 local smart = alife_object(smart_id)
+                                printf("Line 155: Got smart object: %s", smart and smart.id or "nil")
 
                                 if (smart) then
+                                    printf("Line 156: Smart exists")
                                     if (smart.props and smart.props.base > 0) then
+                                        printf("Line 157: Smart is a base")
                                         if (smart.owning_faction == "none" or game_relations.is_factions_enemies(smart.owning_faction, faction)) then
+                                            printf("Line 158: Smart is unowned or owned by enemy faction")
                                             targets[#targets+1] = smart
+                                            printf("Line 159: Added to targets, now %s targets", #targets)
+                                        else
+                                            printf("Line 160: Smart is not a valid target")
                                         end
                                     elseif (smart.props and smart.props.territory > 0 and (smart.props.resource == nil or smart.props.resource <= 0)) then
+                                        printf("Line 161: Smart is a territory without resources")
                                         spawns[#spawns+1] = smart
+                                        printf("Line 162: Added to spawns, now %s spawns", #spawns)
+                                    else
+                                        printf("Line 163: Smart is not a base or territory")
                                     end
+                                else
+                                    printf("Line 164: Smart doesn't exist")
                                 end
+                                printf("Line 165: Finished checking smart %s", smart_id)
                             end
+                            printf("Line 166: Finished checking all smarts")
 
                             if (#spawns > 0 and #targets > 0) then
+                                printf("Line 167: Have %s spawns and %s targets, proceeding with resurgence", #spawns, #targets)
                                 local target = targets[math.random(#targets)]
+                                printf("Line 168: Selected target %s", target:name())
 
                                 -- stronger resurgence attempts
                                 local target_pop = 2 * target.max_population
+                                printf("Line 169: target_pop = %s", target_pop)
 
                                 local nearest_smart = nil
+                                printf("Line 170: nearest_smart = nil")
                                 local nearest_dist = nil
+                                printf("Line 171: nearest_dist = nil")
 
                                 attempted = true
+                                printf("Line 172: attempted = true")
 
                                 if (smart_terrain_warfare.enable_debug) then
+                                    printf("Line 173: Debug enabled, printing resurgence info")
                                     printf("Resurgence of %s is underway, targeting %s with %s squads", faction, target:name(), target_pop)
+                                    printf("Line 174: Debug message printed")
+                                else
+                                    printf("Line 175: Debug not enabled")
                                 end
 
                                 for _,ter in pairs(spawns) do
+                                    printf("Line 176: Checking spawn point %s", ter:name())
                                     local d = smart_terrain_warfare.fetch_smart_distance(target, ter)
+                                    printf("Line 177: Distance to target = %s", d)
 
                                     if (nearest_dist == nil or d < nearest_dist) then
+                                        printf("Line 178: New nearest spawn point found")
                                         nearest_smart = ter
+                                        printf("Line 179: nearest_smart = %s", nearest_smart:name())
                                         nearest_dist = d
+                                        printf("Line 180: nearest_dist = %s", nearest_dist)
+                                    else
+                                        printf("Line 181: Not closer than current nearest")
                                     end
+                                    printf("Line 182: Finished checking spawn point %s", ter:name())
                                 end
+                                printf("Line 183: Found nearest spawn point: %s at distance %s", nearest_smart:name(), nearest_dist)
 
                                 local current_level = nearest_smart.level_id
+                                printf("Line 184: current_level = %s", current_level)
                                 for j=0,target_pop do
+                                    printf("Line 185: Creating squad %s of %s", j, target_pop)
                                     local section = faction_expansions.get_spawn_section(faction, faction_information[faction].resource_count, current_level)
+                                    printf("Line 186: section = %s", section)
                                     local squad = utils_obj.create_squad(section, nearest_smart:name())
+                                    printf("Line 187: Created squad %s", squad and squad.id or "nil")
                                     sim_squad_warfare.set_target(squad, target.id)
+                                    printf("Line 188: Set target to %s", target.id)
                                 end
+                                printf("Line 189: Created all resurgence squads")
+                            else
+                                printf("Line 190: Not enough spawns (%s) or targets (%s)", #spawns, #targets)
                             end
+                        else
+                            printf("Line 191: Level info doesn't exist")
                         end
 
                         if (attempted) then
+                            printf("Line 192: Resurgence attempted, breaking loop")
                             break
+                        else
+                            printf("Line 193: Resurgence not attempted yet, continuing to next level")
                         end
+                        printf("Line 194: Finished checking level %s", chosen)
                     end
+                    printf("Line 195: Finished checking all levels")
+                else
+                    printf("Line 196: Random check failed, skipping resurgence attempt")
                 end
+            else
+                printf("Line 197: Not time for resurgence attempt yet")
             end
+        else
+            printf("Line 198: Faction doesn't qualify for resurgence")
         end
 
         printd(9, "true end")
+        printf("Line 199: Called printd(9)")
     end
+    printf("Line 200: End of update timer check, update_faction finished for %s", faction)
 end
