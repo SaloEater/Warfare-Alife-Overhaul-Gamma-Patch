@@ -4743,10 +4743,11 @@ function find_random_patrol_target(smart, faction, sid)
 	    printf("9) Initial priority set to 0 for %s", other:name())
 
 		if other then
-			printf("9.5) Owned by faction: %s which is enemy: %s", other.owning_faction or "none", is_factions_enemies(faction, other.owning_faction) and "t" or "f")
+			printf("9.5) Owned by faction: %s which is enemy: %s", other.owning_faction or "<empty>", is_factions_enemies(faction, other.owning_faction) and "t" or "f")
 		end
 	    local priority = 0
 
+		printf("9.6) elseif check: %s == %s is %s", other.owning_faction or "<empty>", "none", other.owning_faction == "none" and "t" or "f")
 	    printf("10) Checking if smart exists: %s", smart ~= nil)
 	    if (smart) then
 	        printf("11) Checking if other smart exists: %s", other ~= nil)
@@ -4859,7 +4860,7 @@ function find_random_patrol_target(smart, faction, sid)
 	    elseif (faction == other.owning_faction) and (faction ~= "zombied") then
 	        printf("44) Setting priority for own faction spawn")
 	        priority = 2
-	    elseif (other.owning_faction == "none") then
+	    elseif (other.owning_faction == "none" or not other.owning_faction) then
 	        printf("45) Checking vacant location")
 	        priority = 0
 	        if other then
