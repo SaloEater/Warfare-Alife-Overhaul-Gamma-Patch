@@ -4715,148 +4715,200 @@ function calculate_target_density(smart)
 end
 
 function find_random_patrol_target(smart, faction, sid)
+	printf("1) find_random_patrol_target starting: %s", smart and smart:name() or "spawn")
 	printd(0, "find_random_patrol_target: "..(smart and smart:name() or "spawn"))
 
+	printf("2) Getting smart_level")
 	local smart_level = smart and game_graph():vertex(smart.m_game_vertex_id):level_id()
+	printf("3) Initializing collections")
 	local smartCollection = {}
 	local targets = {}
 	local backup_targets = {}
 
+	printf("4) Beginning to collect smarts from active levels")
 	for _,lvl in pairs(level_targets.active_levels) do
-		local smarts = warfare_levels.level_information[lvl].smarts
-			
-		for i=1,#smarts do
-			smartCollection[#smartCollection+1] = smarts[i]
-		end
-	end	
-	
+	    printf("5) Processing level: %s", tostring(lvl))
+	    local smarts = warfare_levels.level_information[lvl].smarts
+
+	    printf("6) Adding smarts from level to collection, 1 from %s", #smarts)
+	    for i=1,#smarts do
+	        smartCollection[#smartCollection+1] = smarts[i]
+	    end
+	end
+
+	printf("7) Starting to process %s collected smarts", #smartCollection)
 	for i=1,#smartCollection do
-		local other = smartCollection[i] and alife_object(smartCollection[i])		
-		local priority = 0
+	    printf("8) Processing smart %s of %s", i, #smartCollection)
+	    local other = smartCollection[i] and alife_object(smartCollection[i])
+	    printf("9) Initial priority set to 0")
+	    local priority = 0
 
-		if (smart) then																								-- only check priorities if the squad has spawned
-			if (other) then
-				local other_faction = other.owning_faction or "none"
-				local other_level = game_graph():vertex(other.m_game_vertex_id):level_id()
-				
-				-- Duty random patrols target lairs only. Other factions operate normally
-				if (faction ~= "dolg") then
-					if (warfare.influence_levels[other.id] and faction == warfare.actor_faction) then
-						priority = priority + (warfare.influence_levels[other.id] * warfare_options.options.actor_influence_weight)
-					end
-					
-					if other.props[faction] then
-						priority = priority + (other.props[faction] * warfare_options.options.factions[faction].faction_flag_priority)
-					end
-					
-					if (other.props.base > 0) then
-						priority = priority + (other.props.base * warfare_options.options.factions[faction].base_priority)
-					end
-					
-					if (other.props.resource > 0) then			
-						priority = priority + (other.props.resource * warfare_options.options.factions[faction].resource_priority)
-					end
-					
-					if (other.props.territory > 0 and other.props.resource < 1 and other.props.base < 1) then	
-						priority = priority + (other.props.territory * warfare_options.options.factions[faction].territory_priority)
-					end
-				
-					local p = "lvl_"..other_level.."_priority"
-					if warfare_options.options.factions[faction][p] then
-						priority = priority + warfare_options.options.factions[faction][p]
-					end
+	    printf("10) Checking if smart exists: %s", smart ~= nil)
+	    if (smart) then
+	        printf("11) Checking if other smart exists: %s", other ~= nil)
+	        if (other) then
+	            printf("12) Getting other faction and level")
+	            local other_faction = other.owning_faction or "none"
+	            local other_level = game_graph():vertex(other.m_game_vertex_id):level_id()
 
-					if (other.id == smart.id) then
-						priority = 0
-					end
-					
-					if (other_faction ~= "none") and (is_factions_enemies(faction, other_faction)) and (sid) then				-- random patrols only attack hostile locations if they are much stronger than enemy presence
-						local squad = sid and alife_object(sid)
-						local enemy_squads = SIMBOARD.smarts[other.id].squads
-						local enemy_power = 0
-						local patrol_power = sim_offline_combat.calculate_squad_power(squad)
-						for enemy_id,_ in pairs(enemy_squads) do
-							local enemy_squad = enemy_id and alife_object(enemy_id)
-							enemy_power = enemy_power + sim_offline_combat.calculate_squad_power(enemy_squad)
-						end
-						local attack_chance = (patrol_power / enemy_power - 1) * 100
-						if (patrol_power) and (patrol_power > enemy_power) and (attack_chance > math.random(1,100)) then
-							priority = 2
-						else
-							priority = 0
-						end
-					end
+	            printf("13) Checking if faction is not 'dolg': %s", faction ~= "dolg")
+	            if (faction ~= "dolg") then
+	                printf("14) Checking influence levels: %s", warfare.influence_levels[other.id] ~= nil)
+	                if (warfare.influence_levels[other.id] and faction == warfare.actor_faction) then
+	                    printf("15) Adding player influence priority")
+	                    priority = priority + (warfare.influence_levels[other.id] * warfare_options.options.actor_influence_weight)
+	                end
 
-					-- heavily de-prioritize pure lairs
-					if (other.props.resource < 1 and other.props.base < 1 and other.props.territory < 1) then				
-						priority = -1000
-					end
-					
-					-- ISG extremely interested in targeting labs
-					if (faction == "isg") and lab_entrance_smarts[other:name()] then
-						priority = 10 * priority
-					end
-					
-					-- prevent main base attacks if option is enabled
-					if warfare_options.options.prevent_mainbase_attacks and main_bases[other:name()] then
-						priority = -1000
-					end
-				
-				-- Duty random patrol goes to lairs
-				elseif (other.props.lair > 0) then
-					priority = 2
-				end
-			end
+	                printf("16) Checking faction props: %s", other.props[faction] ~= nil)
+	                if other.props[faction] then
+	                    printf("17) Adding faction flag priority")
+	                    priority = priority + (other.props[faction] * warfare_options.options.factions[faction].faction_flag_priority)
+	                end
 
-		elseif (other.owning_faction ~= "none") and is_factions_enemies(faction, other.owning_faction) then		-- during the spawning phase, forbid hostile locations
-			priority = 0
-		elseif ( (faction == "stalker") or (faction == "ecolog") ) and (other.owning_faction ~= "none") and not is_factions_enemies(faction, other.owning_faction) then		-- loners/ecolog can spawn on any neutral location
-			priority = 2
-		elseif (faction == other.owning_faction) and (faction ~= "zombied") then	-- faction random patrols can spawn on their own locations
-			priority = 2
-		elseif (other.owning_faction == "none")	then	-- if the squad has trouble spawning, spawn them on any vacant location in the south
-			priority = 0
-			if other then
-				local other_level = game_graph():vertex(other.m_game_vertex_id):level_id()
-				if (other_level < 12) then	-- only south spawns
-					priority = 1
-				end
-			end
-		end
-		
-		if (priority > 1) then
-			targets[#targets+1] = other
-		elseif (priority > 0) then
-			backup_targets[#backup_targets+1] = other
-		end
-		
+	                printf("18) Checking if base: %s", other.props.base > 0)
+	                if (other.props.base > 0) then
+	                    printf("19) Adding base priority")
+	                    priority = priority + (other.props.base * warfare_options.options.factions[faction].base_priority)
+	                end
+
+	                printf("20) Checking if resource: %s", other.props.resource > 0)
+	                if (other.props.resource > 0) then
+	                    printf("21) Adding resource priority")
+	                    priority = priority + (other.props.resource * warfare_options.options.factions[faction].resource_priority)
+	                end
+
+	                printf("22) Checking if territory only: %s", other.props.territory > 0)
+	                if (other.props.territory > 0 and other.props.resource < 1 and other.props.base < 1) then
+	                    printf("23) Adding territory priority")
+	                    priority = priority + (other.props.territory * warfare_options.options.factions[faction].territory_priority)
+	                end
+
+	                printf("24) Checking level priority for level %s", other_level)
+	                local p = "lvl_"..other_level.."_priority"
+	                if warfare_options.options.factions[faction][p] then
+	                    printf("25) Adding level priority: %s", warfare_options.options.factions[faction][p])
+	                    priority = priority + warfare_options.options.factions[faction][p]
+	                end
+
+	                printf("26) Checking if other is same smart")
+	                if (other.id == smart.id) then
+	                    printf("27) Setting priority to 0 for same smart")
+	                    priority = 0
+	                end
+
+	                printf("28) Checking if enemy location with squad")
+	                if (other_faction ~= "none") and (is_factions_enemies(faction, other_faction)) and (sid) then
+	                    printf("29) Getting squad and calculating powers")
+	                    local squad = sid and alife_object(sid)
+	                    local enemy_squads = SIMBOARD.smarts[other.id].squads
+	                    local enemy_power = 0
+	                    local patrol_power = sim_offline_combat.calculate_squad_power(squad)
+
+	                    printf("30) Calculating enemy power")
+	                    for enemy_id,_ in pairs(enemy_squads) do
+	                        local enemy_squad = enemy_id and alife_object(enemy_id)
+	                        enemy_power = enemy_power + sim_offline_combat.calculate_squad_power(enemy_squad)
+	                    end
+
+	                    printf("31) Attack chance calculation")
+	                    local attack_chance = (patrol_power / enemy_power - 1) * 100
+	                    printf("32) Patrol power: %s, Enemy power: %s", patrol_power, enemy_power)
+	                    if (patrol_power) and (patrol_power > enemy_power) and (attack_chance > math.random(1,100)) then
+	                        printf("33) Setting priority to 2 for attack")
+	                        priority = 2
+	                    else
+	                        printf("34) Setting priority to 0 - not attacking")
+	                        priority = 0
+	                    end
+	                end
+
+	                printf("35) Checking if pure lair")
+	                if (other.props.resource < 1 and other.props.base < 1 and other.props.territory < 1) then
+	                    printf("36) De-prioritizing pure lair")
+	                    priority = -1000
+	                end
+
+	                printf("37) Checking ISG lab targeting")
+	                if (faction == "isg") and lab_entrance_smarts[other:name()] then
+	                    printf("38) Boosting priority for ISG lab target")
+	                    priority = 10 * priority
+	                end
+
+	                printf("39) Checking main base protection")
+	                if warfare_options.options.prevent_mainbase_attacks and main_bases[other:name()] then
+	                    printf("40) De-prioritizing main base")
+	                    priority = -1000
+	                end
+
+	            elseif (other.props.lair > 0) then
+	                printf("41) Setting priority for Duty lair targeting")
+	                priority = 2
+	            end
+	        end
+
+	    elseif (other.owning_faction ~= "none") and is_factions_enemies(faction, other.owning_faction) then
+	        printf("42) Avoiding enemy location during spawn")
+	        priority = 0
+	    elseif ((faction == "stalker") or (faction == "ecolog")) and (other.owning_faction ~= "none") and not is_factions_enemies(faction, other.owning_faction) then
+	        printf("43) Setting priority for loner/ecolog neutral spawn")
+	        priority = 2
+	    elseif (faction == other.owning_faction) and (faction ~= "zombied") then
+	        printf("44) Setting priority for own faction spawn")
+	        priority = 2
+	    elseif (other.owning_faction == "none") then
+	        printf("45) Checking vacant location")
+	        priority = 0
+	        if other then
+	            local other_level = game_graph():vertex(other.m_game_vertex_id):level_id()
+	            printf("46) Checking if southern level: %s", other_level < 12)
+	            if (other_level < 12) then
+	                printf("47) Setting priority for southern vacant location")
+	                priority = 1
+	            end
+	        end
+	    end
+
+	    printf("48) Final priority: %s", priority)
+	    if (priority > 1) then
+	        printf("49) Adding to primary targets")
+	        targets[#targets+1] = other
+	    elseif (priority > 0) then
+	        printf("50) Adding to backup targets")
+	        backup_targets[#backup_targets+1] = other
+	    end
 	end
 
-	-- used for spawning and re-targeting
+	printf("51) Primary targets found: %s", #targets)
 	if (#targets > 0) then
-		local target = targets[math.random(#targets)]
-		if enable_debug then
-			if (smart) then
-				--printf("setting target of %s random patrol to: %s", faction, target:name())
-			else
-				--printf("spawning %s random patrol on %s", faction, target:name())
-			end
-		end
-		return target.id
+	    printf("52) Selecting random primary target")
+	    local target = targets[math.random(#targets)]
+	    if enable_debug then
+	        if (smart) then
+	            printf("53) Debug: setting patrol target: %s", target:name())
+	        else
+	            printf("54) Debug: spawning patrol on: %s", target:name())
+	        end
+	    end
+	    printf("55) Returning target id: %s", target.id)
+	    return target.id
 	end
 
-	-- only used for spawning
+	printf("56) Backup targets found: %s", #backup_targets)
 	if (#backup_targets > 0) then
-		local target = backup_targets[math.random(#backup_targets)]
-		if enable_debug then
-			--printf("spawning %s random patrol on %s", faction, target:name())
-		end
-		return target.id
+	    printf("57) Selecting random backup target")
+	    local target = backup_targets[math.random(#backup_targets)]
+	    if enable_debug then
+	        printf("58) Debug: spawning patrol on backup: %s", target:name())
+	    end
+	    printf("59) Returning backup target id: %s", target.id)
+	    return target.id
 	end
 
+	printf("60) No valid targets found")
 	printd(1)
 
-	return smart.id		-- if no target is valid, the squad will sit on their current location until the next update
+	printf("61) Defaulting to current location: %s", smart and smart.id or "nil")
+	return smart.id
 end
 
 
