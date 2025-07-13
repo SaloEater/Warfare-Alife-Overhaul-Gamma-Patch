@@ -4715,7 +4715,7 @@ function calculate_target_density(smart)
 end
 
 function find_random_patrol_target(smart, faction, sid)
-	printf("1) find_random_patrol_target starting: %s", smart and smart:name() or "spawn")
+	printf("1) find_random_patrol_target starting: %s for %s", smart and smart:name() or "spawn", faction)
 	printd(0, "find_random_patrol_target: "..(smart and smart:name() or "spawn"))
 
 	printf("2) Getting smart_level")
@@ -4741,6 +4741,10 @@ function find_random_patrol_target(smart, faction, sid)
 	    printf("8) Processing smart %s of %s", i, #smartCollection)
 	    local other = smartCollection[i] and alife_object(smartCollection[i])
 	    printf("9) Initial priority set to 0")
+
+		if other then
+			printf("9.5) Owned by faction: %s which is enemy: %s", other.owning_faction or "none", is_factions_enemies(faction, other.owning_faction) and "t" or "f")
+		end
 	    local priority = 0
 
 	    printf("10) Checking if smart exists: %s", smart ~= nil)
