@@ -4740,7 +4740,7 @@ function find_random_patrol_target(smart, faction, sid)
 	for i=1,#smartCollection do
 	    printf("8) Processing smart %s of %s", i, #smartCollection)
 	    local other = smartCollection[i] and alife_object(smartCollection[i])
-	    printf("9) Initial priority set to 0")
+	    printf("9) Initial priority set to 0 for %s", other:name())
 
 		if other then
 			printf("9.5) Owned by faction: %s which is enemy: %s", other.owning_faction or "none", is_factions_enemies(faction, other.owning_faction) and "t" or "f")
