@@ -961,6 +961,34 @@ function on_game_start()
 	RegisterScriptCallback("on_game_load",on_game_load)
 end
 
+function print_delayed_d(e, strFn)
+	if (warfare_options.options.debug_logging) then
+		info = debug.getinfo(2, "nS")
+		local line = debug.getinfo(1).currentline
+
+		if (info.short_src and info.name) then
+			local str = info.short_src.." || "..info.name.." || line: "..line
+
+			local optionalMessage = strFn and strFn() or ""
+			if (e == 0) then
+				str = str.." || start"
+
+				if (optionalMessage) then
+					str = str.." "..optionalMessage
+				end
+			else
+				str = str.." || end "..e
+
+				if (optionalMessage) then
+					str = str.." "..optionalMessage
+				end
+			end
+
+			--printf(str)
+		end
+	end
+end
+
 function printd(e, optionalMessage)
     if (warfare_options.options.debug_logging) then
         info = debug.getinfo(2, "nS")

@@ -1,0 +1,22 @@
+task_manager_task_callback = task_manager.task_callback
+
+function task_manager.task_callback(tsk, state)
+printf("task_manager_task_callback")
+	if (state == task.fail) then		
+		local tm = task_manager.get_task_manager()
+		local id = tsk:get_id()
+		
+		local rtask = tm.task_info[id]
+		if not (rtask) then
+			return 
+		end 
+			
+		local giver_npc_id = rtask.task_giver_id -- mlr
+		local npc = db.storage[giver_npc_id] and db.storage[giver_npc_id].object or level.object_by_id(giver_npc_id)
+		if (not npc and _G.WARFARE) then
+			rtask.cancelled_by_actor = true
+		end
+	end
+	
+	task_manager_task_callback(tsk, state)
+end

@@ -4769,6 +4769,25 @@ function fetch_smart_distance(smart, other)
 	return smart_terrain_distances[smart.id][other.id]
 end
 
+function spawn_right_amount_of_npc(section_type, sm_name, smart_id, leftToSpawn)
+	local squad = utils_obj.create_squad(section_type, sm_name)
+	local count = 0
+	local to_remove = {}
+
+    for k in squad:squad_members() do
+        count = count + 1
+        if count > leftToSpawn then
+            table.insert(to_remove, k.id)
+        end
+    end
+
+    for _, id in ipairs(to_remove) do
+        squad:remove_npc(id)
+    end
+
+    sim_squad_warfare.set_target_trader(squad, smart_id, sm_name)
+    return math.min(count, leftToSpawn)
+end
 
 function check_unique_npcs(smart)
 	printd(0, smart:name())
@@ -4812,7 +4831,8 @@ function check_unique_npcs(smart)
 		printd(3, sm_name)
 		return
 	end
-	
+
+	printf("Checking unique NPCs for %s owned by %s", sm_name, faction)
 	if faction == "killer" then
 		faction = "merc"
 	end
@@ -4821,12 +4841,6 @@ function check_unique_npcs(smart)
 	local mechanic = faction .. "_sim_squad_mechanic"
 	local medic = faction .. "_sim_squad_medic"
 	local barman = faction .. "_sim_squad_barman"
-	
-	local location = nil
-	local spawnTrader = false
-	local spawnMechanic = false
-	local spawnMedic = false
-	local spawnBarman = false
 	
 	if (uniques[sm_name]) then	
 		local tbl = uniques[sm_name]		
@@ -4859,37 +4873,31 @@ function check_unique_npcs(smart)
 				end
 			end
 		end
-		
+
+		local smart_id = smart.id
+		local spawned_amount = 0
 		while traderCount < maxTraders do
-			local squad = utils_obj.create_squad(trader, sm_name)
-									 
-			sim_squad_warfare.set_target_trader(squad, smart.id, sm_name)
+			spawned_amount = spawn_right_amount_of_npc(trader, sm_name, smart_id, maxTraders - traderCount)
+		   	traderCount = traderCount + spawned_amount
 			--printf("SPAWNED TRADER AT "..sm_name)
-			traderCount = traderCount + 1
 		end
-		
+
 		while mechanicCount < maxMechanics do
-			local squad = utils_obj.create_squad(mechanic, sm_name)
-															  
-			sim_squad_warfare.set_target_trader(squad, smart.id, sm_name)
+			spawned_amount = spawn_right_amount_of_npc(mechanic, sm_name, smart_id, maxMechanics - mechanicCount)
+			mechanicCount = mechanicCount + spawned_amount
 			--printf("SPAWNED MECHANIC AT "..sm_name)
-			mechanicCount = mechanicCount + 1
 		end
-		
+
 		while medicCount < maxMedics do
-			local squad = utils_obj.create_squad(medic, sm_name)
-															  
-			sim_squad_warfare.set_target_trader(squad, smart.id, sm_name)
+			spawned_amount = spawn_right_amount_of_npc(medic, sm_name, smart_id, maxMedics - medicCount)
+			medicCount = medicCount + spawned_amount
 			--printf("SPAWNED MEDIC AT "..sm_name)
-			medicCount = medicCount + 1
 		end
-		
+
 		while barmanCount < maxBarmen do
-			local squad = utils_obj.create_squad(barman, sm_name)
-															  
-			sim_squad_warfare.set_target_trader(squad, smart.id, sm_name)
+			spawned_amount = spawn_right_amount_of_npc(barman, sm_name, smart_id, maxBarmen - barmanCount)
+			barmanCount = barmanCount + spawned_amount
 			--printf("SPAWNED BARMAN AT "..sm_name)
-			barmanCount = barmanCount + 1
 		end
 		
 		--printf("end")
