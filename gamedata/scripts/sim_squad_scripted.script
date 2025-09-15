@@ -6,8 +6,8 @@
 
 -- Current Action: 0 - Reach Target | 1 - Stay Point
 
-local STAY_POINT_IDLE_MIN = 2*60*60
-local STAY_POINT_IDLE_MAX = 8*60*60
+local STAY_POINT_IDLE_MIN = 2*60*6
+local STAY_POINT_IDLE_MAX = 8*60*6
 
 dbg_map_hud = false
 local excl_dist = ui_options.get("alife/general/excl_dist")
