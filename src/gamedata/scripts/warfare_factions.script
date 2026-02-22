@@ -413,14 +413,16 @@ function emergency_resurrection_spawn(faction)
                 local smart = alife_object(smart_id)
 
                 if (smart) then
-                    if (smart.props and smart.props.base > 0) then
-                        if (smart.owning_faction == "none" or game_relations.is_factions_enemies(smart.owning_faction, faction)) then
-                            if enable_debug then printf("Emergency resurrection: Found target %s owned by %s", smart:name(), smart.owning_faction) end
-                            if is_faction_main_base(smart:name(), faction) then
-                                if enable_debug then printf("Emergency resurrection: %s is a priority (former main) base of %s", smart:name(), faction) end
-                                priority_targets[#priority_targets+1] = smart
-                            elseif not is_smart_main_base(smart:name()) then
-                                all_targets[#all_targets+1] = smart
+                    if game_graph():vertex(smart.m_game_vertex_id):level_id() ~= get_player_level_id() then
+                        if (smart.props and smart.props.base > 0) then
+                            if (smart.owning_faction == "none" or game_relations.is_factions_enemies(smart.owning_faction, faction)) then
+                                if enable_debug then printf("Emergency resurrection: Found target %s owned by %s", smart:name(), smart.owning_faction) end
+                                if is_faction_main_base(smart:name(), faction) then
+                                    if enable_debug then printf("Emergency resurrection: %s is a priority (former main) base of %s", smart:name(), faction) end
+                                    priority_targets[#priority_targets+1] = smart
+                                elseif not is_smart_main_base(smart:name()) then
+                                    all_targets[#all_targets+1] = smart
+                                end
                             end
                         end
                     end
